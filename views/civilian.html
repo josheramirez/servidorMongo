@@ -15,6 +15,10 @@
         <!-- We will load a map here later-->
     </div>
 
+    <button onclick="requestForHelp()">
+        Request for help
+    </button>
+
     <!--Load JavaScripts -->
 </body>
 </html>
@@ -41,4 +45,21 @@ Write rest of your JS code here -->
     let requestDetails = {};
     let copDetails = {};
     let map, marker;
+
+
+
+    requestDetails = {
+    civilianId: userId,
+    location: {
+        address: "Indiranagar, Bengaluru, Karnataka, India",
+        latitude: 12.9718915,
+        longitude: 77.64115449999997
+    }
+}
+
+// When button is clicked, fire request-for-help and send civilian's userId and location
+function requestForHelp(){
+    socket.emit("request-for-help", requestDetails);
+}
+
 </script>

@@ -32,4 +32,15 @@ router.get('/cop.html', (req, res) => {
         userId: req.query.userId
     });
 });
+
+router.get('/cops/info', async (req, res) => {
+    const userId = req.query.userId // extract userId from query params
+    const copDetails = await dbOperations.fetchCopDetails(userId);
+    
+    res.json({
+        copDetails: copDetails
+    });
+});
+
+
 module.exports = router;

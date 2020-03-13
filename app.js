@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const routes = require('./routes'); // File that contains our endpoints
+const socketEvents = require('./socket-events');
 
 const app = express();
 
@@ -43,4 +44,6 @@ const portNumber = 3000;
 
 server.listen(portNumber, () => { // Runs the server on port 8000
     console.log(`Server listening at port ${portNumber}`);
+    socketEvents.initialize(server);
 });
+
