@@ -55,7 +55,20 @@ Write rest of your JS code here -->
         latitude: 12.9718915,
         longitude: 77.64115449999997
     }
-}
+
+    
+    }
+
+    socket.on("request-accepted", function(eventData){
+    copDetails = eventData; // Save cop details
+
+    // Display Cop address
+    document.getElementById("notification").innerHTML =
+        `${copDetails.displayName} is near ${copDetails.location.address} and will be arriving at your location shortly.
+        You can reach them at their mobile ${copDetails.phone}`;
+});
+
+
 
 // When button is clicked, fire request-for-help and send civilian's userId and location
 function requestForHelp(){

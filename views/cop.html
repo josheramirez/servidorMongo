@@ -15,6 +15,10 @@
         <!-- Some info will be displayed here-->
     </h4>
 
+    <button onclick="helpCivilian()">
+        Help Civilian
+    </button>
+
     <div id="map">
         <!-- We will load a map here later-->
     </div>
@@ -64,18 +68,27 @@ axios.get(`/cops/info?userId=${userId}`)
     })
     .catch((error) => {
         console.log(error);
-    });
+});
 
 // Listen for a "request-for-help" event
 socket.on("request-for-help", (eventData) => { // This function runs once a request-for-help event is received
+    console.log("valor requestDetails antes: "+JSON.stringify(requestDetails));
     requestDetails = eventData; // Contains info of civilian
-
+    console.log("valor requestDetails despues: "+JSON.stringify(requestDetails));
     // display civilian info
     document.getElementById("notification").innerHTML =
     `Civilian ${requestDetails.civilianId} is being attacked by a wildling and needs help!
     They're at ${requestDetails.location.address}`;
 });
 
-
+function helpCivilian() {
+    //Fire a "request-accepted" event/signal and send relevant info back to server
+    console.log("valor requestDetails: "+JSON.stringify(requestDetails));
+    console.log("valor copDetails: "+JSON.stringify(copDetails));
+    socket.emit("request-accepted", {
+        requestDetails: requestDetails,
+        copDetails: copDetails
+    });
+}
 
 </script>
