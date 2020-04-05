@@ -3,6 +3,8 @@ const Cop = dataModel.Cop;
 const Request = dataModel.Request;
 
 function fetchNearestCops(coordinates, maxDistance) {
+
+    // console.log(coordinates);
     return Cop.find({
         location: {
             $near: {
@@ -21,6 +23,8 @@ function fetchNearestCops(coordinates, maxDistance) {
 }
 
 function fetchCopDetails(userId) {
+// console.log("en fetchCopDetails "+userId);
+
     return Cop.findOne({
         userId: userId
     }, {
@@ -58,7 +62,7 @@ function updateRequest(issueId, copId, status) {
     }, {
         status: status,
         copId: copId
-    }).catch(error => {
+    }, {useFindAndModify: false}).catch(error => {
         console.log(error);
     });
     }

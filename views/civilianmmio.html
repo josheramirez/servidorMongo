@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Civilian {{ userId }} </title>
+    <!-- distintas versiones de mapbox -->
+    <script src='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.css' rel='stylesheet' />
+</head>
+<body data-userId="{{ userId }}">
+    <h1>Hello Civilian {{ userId }}</h1>
+
+    <h4 id="notification">
+    </h4>
+
+    <div id="map" style='width: 800px; height: 500px;'>
+    </div>
+
+    <button onclick="requestForHelp()">
+        Request for help
+    </button>
+</body>
+</html>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<script type="text/javascript">
+
+    L.mapbox.accessToken = "pk.eyJ1Ijoiam9zZWluZm9ybWF0aWNvMjAxNSIsImEiOiJjazdzNWFmYnIwY21uM3NvNHZoemg5ZmJqIn0.EHg5K9m_gdHJBnL1JcudYg";
+    map = L.mapbox.map("map", "mapbox.streets"); 
+    map.setView([12.9718915, 77.64115449999997], 9); 
+    marker = L.marker([12.9718915, 77.64115449999997]).addTo(map); 
+
+
+    map.addControl(L.mapbox.geocoderControl("mapbox.places", {
+        autocomplete: true, 
+    }).on("select", (data) => {
+        console.log(data); 
+        requestDetails.location = {
+            address: data.feature["place_name"],
+            latitude: data.feature.center[1],
+            longitude: data.feature.center[0]
+        };
+        marker.setLatLng([data.feature.center[1], data.feature.center[0]]);
+    }));
+</script>
+
+<script type="text/javascript">
+    const socket = io();
+    const userId = document.body.getAttribute("data-userId");
+    socket.emit("join", {userId: userId});
+
+    let requestDetails = {};
+    let copDetails = {};
+    let map, marker;
+
+    requestDetails = {
+        civilianId: userId,
+        location: {
+            address: "Indiranagar, Bengaluru, Karnataka, India",
+            latitude: 12.9718915,
+            longitude: 77.64115449999997
+        }
+    }
+
+    socket.on('request-accepted', (eventData)=>{
+        console.log('en civilian en request accepted');
+        copDetails = eventData; // Save cop details
+        console.log('ayuda recibida de: '+eventData);
+        // Display Cop address
+        document.getElementById("notification").innerHTML =
+        `${copDetails.displayName} is near ${copDetails.location.address} and will be arriving at your location shortly.
+        You can reach them at their mobile ${copDetails.phone}`;
+
+       // Show cop location on the map
+       L.marker([
+                copDetails.location.latitude,
+                copDetails.location.longitude
+            ], {
+                icon: L.icon({
+                    iconUrl: "/images/cop.png",
+                    iconSize: [60, 28]
+                })
+        }).addTo(map);
+
+    });
+
+
+
+// When button is clicked, fire request-for-help and send civilian's userId and location
+function requestForHelp(){
+    console.log('enviado a servidor: '+JSON.stringify(requestDetails));
+    socket.emit("request-for-help", requestDetails);
+}
+
+</script>

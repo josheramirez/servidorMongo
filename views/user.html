@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Usuario {{ userId }}</title>
+    <script src="https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.css"
+      rel="stylesheet"
+    />
+
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+  </head>
+  <body data-userId="{{ userId }}">
+    <h1>Hola Usuario: {{ userId }}</h1>
+    <div id="copDetails"></div>
+    <h4 id="notification">
+      <!-- Some info will be displayed here-->{{ latitude }}<>{{ longitude }}
+    </h4>
+
+    <button onclick="helpCivilian()">
+      Help Civilian
+    </button>
+
+    <div id="map" style="width: 800px; height: 500px;">
+      <!-- We will load a map here later-->
+    </div>
+
+    <!--Load JavaScripts -->
+  </body>
+</html>
+
+<!-- Load socket.io client library -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Load Axios from a CDN -->
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<!-- load libraries before your JS code
+Write rest of your JS code here -->
+
+<script type="text/javascript">
+  const socket = io();
+
+  // Fetch userId from the data-atribute of the body tag
+  const userId = document.body.getAttribute("data-userId");
+
+  // Fire a 'join' event and send your userId to the server, to join a room - room-name will be the userId itself!
+  socket.emit("join", { userId: userId });
+
+  // Declare variables, this will be used later
+  let requestDetails = {};
+  let copDetails = {};
+  let map, marker;
+
+  // First send a GET request using Axios and get the cop's details and save it
+  axios
+    .get(`/cops/info?userId=${userId}`)
+    .then((response) => {
+      copDetails = response.data.copDetails;
+      //envio el userId al objeto enviado
+      copDetails["userId"] = userId;
+      copDetails.location = {
+        address: copDetails.location.address,
+        longitude: copDetails.location.coordinates[0],
+        latitude: copDetails.location.coordinates[1],
+      };
+      document.getElementById(
+        "copDetails"
+      ).innerHTML = `Display Name: ${copDetails.displayName}
+                Address: ${copDetails.location.address}
+                `;
+      L.mapbox.accessToken =
+        "pk.eyJ1Ijoiam9zZWluZm9ybWF0aWNvMjAxNSIsImEiOiJjazdzNWFmYnIwY21uM3NvNHZoemg5ZmJqIn0.EHg5K9m_gdHJBnL1JcudYg";
+      // Load the map and set it to a cop's lat-lng
+      map = L.mapbox.map("map", "mapbox.streets");
+      map.setView(
+        [copDetails.location.latitude, copDetails.location.longitude],
+        15
+      );
+
+      // Display a default marker
+      marker = L.marker([
+        copDetails.location.latitude,
+        copDetails.location.longitude,
+      ]).addTo(map);
+
+      // Use MapBox geo-coding API
+      map.addControl(
+        L.mapbox
+          .geocoderControl("mapbox.places", {
+            autocomplete: true,
+          })
+          .on("select", (data) => {
+            // This function runs when a place is selected
+            // data contains the geocding results
+            console.log(data);
+
+            // Set the marker to new location
+            marker.setLatLng([data.feature.center[1], data.feature.center[0]]);
+          })
+      );
+      // console.log("copDetails en cop.html "+JSON.stringify(copDetails))
+      console.log("user id enaxios" + userId, copDetails);
+
+      socket.emit("updateLocation", copDetails);
+    })
+    .catch((error) => {
+      console.log("aqui" + error);
+    });
+
+  // Listen for a "request-for-help" event
+  socket.on("request-for-help", (eventData) => {
+    // This function runs once a request-for-help event is received
+    console.log(
+      "valor requestDetails antes: " + JSON.stringify(requestDetails)
+    );
+    requestDetails = eventData; // Contains info of civilian
+    console.log(
+      "valor requestDetails despues: " + JSON.stringify(requestDetails)
+    );
+    // display civilian info
+    document.getElementById(
+      "notification"
+    ).innerHTML = `Civilian ${requestDetails.civilianId} is being attacked by a wildling and needs help!
+    They're at ${requestDetails.location.address}`;
+
+    // Show civilian location on the map
+    L.marker(
+      [requestDetails.location.latitude, requestDetails.location.longitude],
+      {
+        icon: L.icon({
+          iconUrl: "/images/civilian.png",
+          iconSize: [50, 50],
+        }),
+      }
+    ).addTo(map);
+  });
+
+  socket.on("nearestUsers", (eventData) => {
+    nearestUsers = eventData;
+    // console.log("recibo en nearuser"+JSON.stringify(nearestUsers[0]),"map :"+map);
+    for (key in nearestUsers) {
+      // Show civilian location on the map
+      L.marker(
+        [
+          nearestUsers[key].location.coordinates[1],
+          nearestUsers[key].location.coordinates[0],
+        ],
+        {}
+      ).addTo(map);
+    }
+  });
+
+  function helpCivilian() {
+    //Fire a "request-accepted" event/signal and send relevant info back to server
+    console.log("valor requestDetails: " + JSON.stringify(requestDetails));
+    console.log("valor copDetails: " + JSON.stringify(copDetails));
+    socket.emit("request-accepted", {
+      requestDetails: requestDetails,
+      copDetails: copDetails,
+    });
+  }
+
+  
+</script>

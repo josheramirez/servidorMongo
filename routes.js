@@ -16,6 +16,9 @@ router.get('/cops', async (req, res) => {
     });
 });
 
+// router.get('/data.html', function(req, res) {
+//     res.render('data.html');
+// });
 
 router.get('/', function (req, res) {
     res.send('Hello World!');
@@ -34,11 +37,22 @@ router.get('/cop.html', (req, res) => {
 });
 
 router.get('/cops/info', async (req, res) => {
+
+    // console.log("en cops/info");
     const userId = req.query.userId // extract userId from query params
+    // console.log("en cops/info userId "+userId);
     const copDetails = await dbOperations.fetchCopDetails(userId);
-    
+    // console.log("en cops/info copDetails"+copDetails);
     res.json({
         copDetails: copDetails
+    });
+});
+
+router.get('/user.html', (req, res) => {
+    res.render('user.html', {
+        latitude : Number(req.query.lat),
+        longitude : Number(req.query.lng),
+        userId: req.query.userId
     });
 });
 

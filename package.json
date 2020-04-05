@@ -10,5 +10,14 @@
     "handlebars": "^4.1.2",
     "mongoose": "^5.6.2",
     "socket.io": "^2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  },
+
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon --watch app.js"
   }
+
 }

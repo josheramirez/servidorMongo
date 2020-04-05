@@ -17,6 +17,7 @@ app.use(bodyParser.json({
     limit: '5mb'
 }));
 
+
 app.set('views', 'views'); // Set the folder-name from where you serve the html page.
 app.use(express.static('./public')); // setting the folder name (public) where all the static files like css, js & images are made available
 
@@ -29,7 +30,7 @@ const db = 'mongodb://localhost:27017/uberForX';
 mongoose.set('useCreateIndex', true);
 mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true }).then(value => {
     // Successful connection
-    console.log(value.models);
+     console.log(value.models);
 }).catch(error => {
     // Error in connection
     console.log(error);
