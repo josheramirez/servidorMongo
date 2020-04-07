@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Usuario {{ userId }}</title>
+    <title>Usuario {{ user_Id }}</title>
     <script src="https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js"></script>
     <link
       href="https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.css"
@@ -12,11 +12,11 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
   </head>
-  <body data-userId="{{ userId }}">
-    <h1>Hola Usuario: {{ userId }}</h1>
+  <body data-userId="{{ user_Id }}" lat="{{lat }}" lng="{{lng}}">
+    <h1>Hola Usuario: {{ user_Id }}</h1>
     <div id="userDetails"></div>
     <h4 id="notification">
-      <!-- Some info will be displayed here-->{{ latitude }}<>{{ longitude }}
+      <!-- Some info will be displayed here-->{{ lat }}<>{{ lng }}
     </h4>
 
     <button onclick="helpCivilian()">
@@ -45,45 +45,30 @@ Write rest of your JS code here -->
 
   // Fetch userId from the data-atribute of the body tag
   const userId = document.body.getAttribute("data-userId");
-
-  // Fire a 'join' event and send your userId to the server, to join a room - room-name will be the userId itself!
+  const lat = document.body.getAttribute("lat");
+  const lng = document.body.getAttribute("lng");
+  
+  // conecto cleinte al servidor y creo un canal
   socket.emit("join", { userId: userId });
 
-  // Declare variables, this will be used later
-  let requestDetails = {};
-  let userDetails = {};
-  let map, marker;
+  // busco los usuarios cercanos
+  socket.emit("findNear", { userId:userId,lat:lat,lng:lng });
 
-  // First send a GET request using Axios and get the user's details and save it
-  axios
-    .get(`/user/info?userId=${userId}`)
-    .then((response) => {
+  // 
 
-      userDetails = response.data.userDetails;
-      // userDetails["userId"] = userId;
-      userDetails.location = {
-        address: userDetails.location.address,
-        longitude: userDetails.location.coordinates[0],
-        latitude: userDetails.location.coordinates[1],
-      };
-      document.getElementById("userDetails").innerHTML = 
-          `
-          Display Name: ${userDetails.displayName} 
-          Address: ${userDetails.location.address}
-          `;
+
+      // pinto mapa  
       L.mapbox.accessToken =
         "pk.eyJ1Ijoiam9zZWluZm9ybWF0aWNvMjAxNSIsImEiOiJjazdzNWFmYnIwY21uM3NvNHZoemg5ZmJqIn0.EHg5K9m_gdHJBnL1JcudYg";
       map = L.mapbox.map("map", "mapbox.streets");
       map.setView(
-        [userDetails.location.latitude, userDetails.location.longitude],
+        [lat, lng],
         15
       );
 
-      // Display a default marker
+// marcador de este usuario
       marker = L.marker(
-        [userDetails.location.latitude,
-        userDetails.location.longitude
-        ],
+        [lat,lng],
         {
                 icon: L.icon({
                   iconUrl: "/images/civilian.png",
@@ -91,6 +76,7 @@ Write rest of your JS code here -->
                 }),
         }
       ).addTo(map);
+
 
       // Use MapBox geo-coding API
       map.addControl(
@@ -107,50 +93,17 @@ Write rest of your JS code here -->
             marker.setLatLng([data.feature.center[1], data.feature.center[0]]);
           })
       );
-      // console.log("userDetails en user.html "+JSON.stringify(userDetails))
-      console.log("user id enaxios" + userId, userDetails);
-      socket.emit("updateLocation", userDetails);
-    })
-    .catch((error) => {
-      console.log("aqui" + error);
-    });
 
-  // Listen for a "request-for-help" event
-  socket.on("request-for-help", (eventData) => {
-    // This function runs once a request-for-help event is received
-    console.log(
-      "valor requestDetails antes: " + JSON.stringify(requestDetails)
-    );
-    requestDetails = eventData; // Contains info of civilian
-    console.log(
-      "valor requestDetails despues: " + JSON.stringify(requestDetails)
-    );
-    // display civilian info
-    document.getElementById(
-      "notification"
-    ).innerHTML = `Civilian ${requestDetails.civilianId} is being attacked by a wildling and needs help!
-    They're at ${requestDetails.location.address}`;
-
-    // Show civilian location on the map
-    L.marker(
-      [requestDetails.location.latitude, requestDetails.location.longitude],
-      {
-        icon: L.icon({
-          iconUrl: "/images/civilian.png",
-          iconSize: [50, 50],
-        }),
-      }
-    ).addTo(map);
-  });
 
   socket.on("nearestUsers", (eventData) => {
     nearestUsers = eventData;
     // console.log("recibo en nearuser"+JSON.stringify(nearestUsers[0]));
-    console.log(userDetails.userId);
+    console.log("este usuario: "+userId+" lat "+lat+" lng "+lng);
     for (key in nearestUsers) {
       console.log(nearestUsers[key].userId!=userDetails.userId);
       if(nearestUsers[key].userId!=userDetails.userId){
         // Show civilian location on the map
+        console.log(nearestUsers[key].userId);
         L.marker(
         [
         nearestUsers[key].location.coordinates[1],
@@ -162,6 +115,24 @@ Write rest of your JS code here -->
     }  
   });
 
+  socket.on("newNearUser", (eventData) => {
+   
+     console.log("recibo en newnearuser"+JSON.stringify(eventData.lat));
+
+        L.marker(
+          [
+          eventData.lat,
+          eventData.lng
+          ],
+          {
+                icon: L.icon({
+                  iconUrl: "/images/civilian.png",
+                  iconSize: [50, 50],
+                }),
+        }
+        ).addTo(map);
+  
+  });
   function helpCivilian() {
     //Fire a "request-accepted" event/signal and send relevant info back to server
     console.log("valor requestDetails: " + JSON.stringify(requestDetails));

@@ -88,6 +88,37 @@ function initialize(server) {
         });
 
 
+        
+        socket.on('findNear', async(userDetails) => {
+
+            console.log("recibo en findNear: "+JSON.stringify(userDetails));
+   
+
+           const location = { // Convert latitude and longitude to [longitude, latitude]
+               coordinates: [
+                   userDetails.lng,
+                   userDetails.lat
+               ]
+           };
+
+           const nearestUsers = await dbOperations.fetchNearestCops(location.coordinates, 2000);
+           console.log("Usuarios cercanos: "+nearestUsers.length);
+           
+           //envio los cercanos al usuario que actualizo su locacion
+
+           io.sockets.in(userDetails.userId).emit('nearestUsers', nearestUsers);
+
+
+           // console.log("enviado a usuario el neates: "+userDetails.userId);
+           
+           // envio a los usuarios cercanos la info del nuevo usuario
+           for (let i = 0; i < nearestUsers.length; i++) {
+                console.log("enviado de a: "+nearestUsers[i].userId+ "location de user : "+JSON.stringify(location));
+               io.sockets.in(nearestUsers[i].userId).emit('newNearUser', userDetails);
+           }
+
+       });
+
         socket.on('request-accepted', async (eventData) => { //Listen to a 'request-accepted' event from connected cops
             console.log('eventData contains', eventData);
             // //Convert string to MongoDb's ObjectId data-type

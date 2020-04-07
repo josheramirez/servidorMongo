@@ -1,6 +1,7 @@
 const dataModel = require('./data-model');
 const Cop = dataModel.Cop;
 const Request = dataModel.Request;
+const User = dataModel.User;
 
 function fetchNearestCops(coordinates, maxDistance) {
 
@@ -31,13 +32,30 @@ function fetchCopDetails(userId) {
         copId: 1,
         displayName: 1,
         phone: 1,
-        location: 1
+        location: 1,
+        userId:1
     })
     .exec()
     .catch(error => {
         console.log(error);
     });
 }
+
+function fetchUserDetails(userId) {    
+        return User.findOne({
+            userId: userId
+        }, {
+            UserId: 1,
+            displayName: 1,
+            phone: 1,
+            location: 1,
+        userId:1
+        })
+        .exec()
+        .catch(error => {
+            console.log(error);
+        });
+    }
 
 
 function saveRequest(requestId, requestTime, location, civilianId, status){
@@ -67,7 +85,10 @@ function updateRequest(issueId, copId, status) {
     });
     }
     
+    
     exports.fetchNearestCops = fetchNearestCops;
     exports.fetchCopDetails = fetchCopDetails;
     exports.saveRequest = saveRequest;
     exports.updateRequest = updateRequest;
+
+    exports.fetchUserDetails = fetchUserDetails;

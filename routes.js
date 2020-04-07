@@ -48,11 +48,29 @@ router.get('/cops/info', async (req, res) => {
     });
 });
 
-router.get('/user.html', (req, res) => {
-    res.render('user.html', {
-        latitude : Number(req.query.lat),
-        longitude : Number(req.query.lng),
-        userId: req.query.userId
+router.get('/user/info', async (req, res) => {
+    const userId = req.query.userId 
+    const userDetails = await dbOperations.fetchUserDetails(userId);
+    res.json({
+        userDetails: userDetails
+    });
+});
+
+
+router.get('/map/info', async (req, res) => {
+    const lat = req.query.lat
+    const lng = req.query.lng
+    const userDetails = await dbOperations.fetchUserDetails(userId);
+    res.json({
+        userDetails: userDetails
+    });
+});
+
+router.get('/map.html', (req, res) => {
+    res.render('map.html', {
+        lat : Number(req.query.lat),
+        lng : Number(req.query.lng),
+        user_Id: req.query.userId
     });
 });
 
